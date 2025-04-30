@@ -219,7 +219,9 @@ void B_input(struct pkt packet)
 void B_init(void)
 {
   expectedseqnum = 0;
-  B_nextseqnum = 1;
+  for (int i = 0; i < SEQSPACE; i++) {
+    resqe[i] = false;
+  }
 }
 
 /******************************************************************************
