@@ -4,24 +4,6 @@
 #include "emulator.h"
 #include "sr.h"
 
-/* ******************************************************************
-   Go Back SR protocol.  Adapted from J.F.Kurose
-   ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.2  
-
-   Network properties:
-   - one way network delay averages five time units (longer if there
-   are other messages in the channel for SR), but can be larger
-   - packets can be corrupted (either the header or the data portion)
-   or lost, according to user-defined probabilities
-   - packets will be delivered in the order in which they were sent
-   (although some can be lost).
-
-   Modifications: 
-   - removed bidirectional SR code and other code not used by prac. 
-   - fixed C style to adhere to current programming style
-   - added SR implementation
-**********************************************************************/
-
 #define RTT  16.0       /* round trip time.  MUST BE SET TO 16.0 when submitting assignment */
 #define WINDOWSIZE 6    /* the maximum number of buffered unacked packet */
 #define SEQSPACE 12      /* the min sequence space for GBN must be at least windowsize + 2 */
@@ -68,7 +50,8 @@ void A_output(struct msg message)
   int i;
 
   /* if not blocked waiting on ACK */
-  if (windowcount < WINDOWSIZE) {
+  if (windowcount < WINDOWSIZE) 
+  {
     if (TRACE > 1)
       printf("----A: New message arrives, send window is not full, send new messge to layer3!\n");
 
@@ -98,7 +81,8 @@ void A_output(struct msg message)
     A_nextseqnum = (A_nextseqnum + 1) % SEQSPACE;  
   }
   /* if blocked,  window is full */
-  else {
+  else 
+  {
     if (TRACE > 0)
       printf("----A: New message arrives, send window is full\n");
     window_full++;
@@ -111,20 +95,24 @@ void A_output(struct msg message)
 void A_input(struct pkt packet)
 {
   /* if received ACK is not corrupted */ 
-  if (!IsCorrupted(packet)) {
+  if (!IsCorrupted(packet)) 
+  {
     if (TRACE > 0)
       printf("----A: uncorrupted ACK %d is received\n", packet.acknum);
 
-    if (!acked[packet.acknum]) {
+    if (!acked[packet.acknum]) 
+    {
       if (TRACE > 0)
         printf("----A: ACK %d is not a duplicate\n", packet.acknum);
       new_ACKs++;
-      acked[packet.acknum] = true; /* mark this ACK already got received */
+      acked[packet.acknum] = true; /*  mark this ACK already got received */
 
       /* only slide window if this is the oldest or the lowest unacked packets in window */
-      if (packet.acknum == buffer[windowfirst].seqnum) {
+      if (packet.acknum == buffer[windowfirst].seqnum) 
+      {
         /* look for next unacked packet and start its timer */
-        while (windowcount > 0 && acked[buffer[windowfirst].seqnum]) {
+        while (windowcount > 0 && acked[buffer[windowfirst].seqnum]) 
+        {
           windowfirst = (windowfirst + 1) % WINDOWSIZE;
           windowcount--;
         }
@@ -145,14 +133,14 @@ void A_input(struct pkt packet)
 /* called when A's timer goes off */
 void A_timerinterrupt(void)
 {
+
   if (TRACE > 0) 
     printf("----A: time out, resend packets!\n");
 
-/* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
+  /* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
   if (TRACE > 0)
     printf("----A: resending packet %d\n", buffer[windowfirst].seqnum);
 
-  
   tolayer3(A, buffer[windowfirst]);
   packets_resent++;
   
@@ -168,17 +156,17 @@ void A_init(void)
   A_nextseqnum = 0;  /* A starts with seq num 0, do not change this */
   windowfirst = 0;
   windowlast = -1;   /* windowlast is where the last packet sent is stored.  
-                       new packets are placed in winlast + 1 
-                       so initially this is set to -1 */
+		     new packets are placed in winlast + 1 
+		     so initially this is set to -1
+		   */
   windowcount = 0;
 }
 
 /********* Receiver (B)  variables and procedures ************/
 
 static int expectedseqnum; /* the sequence number expected next by the receiver */
-static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
 static struct pkt receivedpkt[SEQSPACE]; /* received packets already got but not submitted, out of order, but must in cache */
-static bool received[SEQSPACE];  /* used to mark and sequence each order of packet received or not */
+static bool resqe[SEQSPACE];  /* used to mark and sequence each order of packet resqe or not */
 
 /* called from layer 3, when a packet arrives for layer 4 at B */
 void B_input(struct pkt packet)
@@ -187,30 +175,34 @@ void B_input(struct pkt packet)
   int i;
 
   /* if not corrupted and received packet is in order */
-  if (!IsCorrupted(packet)) {
+  if (!IsCorrupted(packet)) 
+  {
     if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n", packet.seqnum);
-    packets_received++;
+      printf("----B: packet %d is correctly resqe, send ACK!\n", packet.seqnum);
+    packets_resqe++;
 
     /* deliver to receiving application */
-    if (received[packet.seqnum] == false) {
-      received[packet.seqnum] = true;
+
+    if (resqe[packet.seqnum] == false) 
+    {
+      resqe[packet.seqnum] = true;
       for (i = 0; i < 20; i++)
         receivedpkt[packet.seqnum].payload[i] = packet.payload[i];
     }
 
     /* follow the sequence send the packet to the application layer */
-    while (received[expectedseqnum] == true) {
+    while (resqe[expectedseqnum] == true) 
+    {
       tolayer5(B, packet.payload);
-      received[expectedseqnum] = false;
+      resqe[expectedseqnum] = false;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
     }
 
     /* send an ACK for the received packet */
-    sendpkt.acknum = packet.seqnum; /* ACK */
+    sendpkt.acknum = packet.seqnum; 
     sendpkt.seqnum = NOTINUSE; /* ACK */
 
-    /* we don't have any data to send. Fill payload with 0's */
+    /* we don't have any data to send.  fill payload with 0's */
     for (i = 0; i < 20; i++) 
       sendpkt.payload[i] = '0';  
 
@@ -234,7 +226,7 @@ void B_init(void)
  * The following functions need be completed only for bi-directional messages *
  *****************************************************************************/
 
-/* Note that with simplex transfer from A-to-B, there is no B_output() */
+/* Note that with simplex transfer from a-to-B, there is no B_output() */
 void B_output(struct msg message)  
 {
 }
