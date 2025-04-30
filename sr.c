@@ -139,7 +139,7 @@ void A_timerinterrupt(void)
 
   /* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
   if (TRACE > 0)
-    printf("----A: resending packet %d\n", buffer[windowfirst].seqnum);
+    printf("---A: resending packet %d\n", buffer[windowfirst].seqnum);
 
   tolayer3(A, buffer[windowfirst]);
   packets_resent++;
