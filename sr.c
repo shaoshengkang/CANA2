@@ -218,8 +218,8 @@ void B_input(struct pkt packet)
 /* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
 {
-  expectedseqnum = 0;
-  for (int i = 0; i < SEQSPACE; i++) {
+  int i;
+  for (i = 0; i < SEQSPACE; i++) {
     resqe[i] = false;
   }
 }
