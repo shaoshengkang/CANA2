@@ -2,29 +2,29 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "emulator.h"
-#include "gbn.h"
+#include "sr.h"
 
 /* ******************************************************************
-   Go Back N protocol.  Adapted from J.F.Kurose
+   Go Back SR protocol.  Adapted from J.F.Kurose
    ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.2  
 
    Network properties:
    - one way network delay averages five time units (longer if there
-   are other messages in the channel for GBN), but can be larger
+   are other messages in the channel for SR), but can be larger
    - packets can be corrupted (either the header or the data portion)
    or lost, according to user-defined probabilities
    - packets will be delivered in the order in which they were sent
    (although some can be lost).
 
    Modifications: 
-   - removed bidirectional GBN code and other code not used by prac. 
+   - removed bidirectional SR code and other code not used by prac. 
    - fixed C style to adhere to current programming style
-   - added GBN implementation
+   - added SR implementation
 **********************************************************************/
 
 #define RTT  16.0       /* round trip time.  MUST BE SET TO 16.0 when submitting assignment */
 #define WINDOWSIZE 6    /* the maximum number of buffered unacked packet */
-#define SEQSPACE 7      /* the min sequence space for GBN must be at least windowsize + 1 */
+#define SEQSPACE 12      /* the min sequence space for GBN must be at least windowsize + 2 */
 #define NOTINUSE (-1)   /* used to fill header fields that are not being used */
 
 /* generic procedure to compute the checksum of a packet.  Used by both sender and receiver  
@@ -60,6 +60,7 @@ static struct pkt buffer[WINDOWSIZE];  /* array for storing packets waiting for 
 static int windowfirst, windowlast;    /* array indexes of the first/last packet awaiting ACK */
 static int windowcount;                /* the number of packets currently awaiting an ACK */
 static int A_nextseqnum;               /* the next sequence number to be used by the sender */
+static bool acked[WINDOWSIZE]          /*Use for the check make sure which packets already been ACKed */
 
 /* called from layer 5 (application layer), passed the message to be sent to other side */
 void A_output(struct msg message)
@@ -150,7 +151,6 @@ void A_input(struct pkt packet)
             stoptimer(A);
             if (windowcount > 0)
               starttimer(A, RTT);
-
           }
         }
         else
