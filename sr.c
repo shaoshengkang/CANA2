@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "emulator.h"
 #include "sr.h"
- 
+
 /* ******************************************************************
    Go Back N protocol.  Adapted from J.F.Kurose
    ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.2  
@@ -195,24 +195,20 @@ void B_input(struct pkt packet)
   int i;
 
   /* if not corrupted and received packet is in order */
-  if (!IsCorrupted(packet)) 
-  {
+  if (!IsCorrupted(packet)){
     if (TRACE > 0)
       printf("----B: packet %d is correctly resqe, send ACK!\n", packet.seqnum);
     packets_received++;
 
     /* deliver to receiving application */
-
-    if (resqe[packet.seqnum] == false) 
-    {
+    if (resqe[packet.seqnum] == false){
       resqe[packet.seqnum] = true;
       for (i=0; i<20; i++ )
         receivedpkt[packet.seqnum].payload[i] = packet.payload[i];
     }
 
     /* follow the sequence send the packet to the application layer */
-    while (resqe[expectedseqnum] == true) 
-    {
+    while (resqe[expectedseqnum] == true){
       tolayer5(B, packet.payload);
       resqe[expectedseqnum] = false;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
