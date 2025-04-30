@@ -123,16 +123,17 @@ void A_input(struct pkt packet){
       if (TRACE > 0)
         printf("----A: ACK %d is not a duplicate\n", packet.acknum);
       new_ACKs++;
-      acked[packet.acknum] = true; /* Mark receeived ack */
+      acked[packet.acknum] = true;  /*  mark this ACK already got received */
 
-      /* Slide if this is the first unacked packet on window */
+      /* only slide window if this is the oldest or the lowest unacked packets in window */
       if(packet.acknum == buffer[windowfirst].seqnum){
-        /* Move to next unacked packet and start timer */
+        /* look for next unacked packet and start its timer */
         while(windowcount > 0 && acked[buffer[windowfirst].seqnum]){
           windowfirst = (windowfirst + 1) %  WINDOWSIZE;
           windowcount--;
           }
-        /* start timer again if there are still more unacked packets in window */
+
+        /* restart the time again and if still have more unacked packets in the window */
         stoptimer(A);
         if (windowcount > 0)
           starttimer(A, RTT);
@@ -150,7 +151,7 @@ void A_timerinterrupt(void){
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
-  /* Resend far left unacked packet on the window*/
+  /* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
   if (TRACE > 0)
     printf("---A: resending packet %d\n", buffer[windowfirst].seqnum);
 
@@ -205,14 +206,14 @@ void B_input(struct pkt packet)
         receivedpkt[packet.seqnum].payload[i] = packet.payload[i];
     }
 
-    /* Send packets to the application layer in order */
+    /* follow the sequence send the packet to the application layer */
     while (resqe[expectedseqnum] == true){
       tolayer5(B, packet.payload);
       resqe[expectedseqnum] = false;
       expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
     }
 
-    /* Initialize sequence number in preparation for next use */
+    /* send an ACK for the received packet */
     sendpkt.acknum = packet.seqnum;
     sendpkt.seqnum = NOTINUSE; /* ACK */
 
