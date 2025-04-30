@@ -125,10 +125,11 @@ void A_input(struct pkt packet)
       if (TRACE > 0)
         prinf("----A: ACK %d is not a duplicate\n", packet.acknum);
         new_ACKs++;
-        acked[packet.acknum] = trus; // mark this ACK already got received
+        acked[packet.acknum] = true; // mark this ACK already got received
   
         /*only slide window if this is the oldest or the lowest unacked packets in window*/
-        if(packet.acknum == buffer[windowfirst].seqnum){
+        if(packet.acknum == buffer[windowfirst].seqnum)
+        {
           /* look for next Unacked packet and start its timer*/
           while(windowcount > 0 && acked[buffer[windowfirst].seqnum])
           {
@@ -182,6 +183,8 @@ void A_init(void)
 
 static int expectedseqnum; /* the sequence number expected next by the receiver */
 static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
+static struct pkt receivedpkt[SEQSPACE];/*received already got packet but not sumbit，out of order, but must in cache*/
+static bool received[SEQSPACE];/* use for mark and sequence each order of packet recevied or not*/
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 void B_input(struct pkt packet)
@@ -192,7 +195,7 @@ void B_input(struct pkt packet)
   /* if not corrupted and received packet is in order */
   if  ((!IsCorrupted(packet))  && (packet.seqnum == expectedseqnum)) {
     if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
+      printf("----B: packet %d is correctly received, send ACK!\n", packet.seqnum);
     packets_received++;
 
     /* deliver to receiving application */
