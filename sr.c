@@ -41,7 +41,7 @@ static struct pkt buffer[WINDOWSIZE];  /* array for storing packets waiting for 
 static int windowfirst, windowlast;    /* array indexes of the first/last packet awaiting ACK */
 static int windowcount;                /* the number of packets currently awaiting an ACK */
 static int A_nextseqnum;               /* the next sequence number to be used by the sender */
-static bool acked[WINDOWSIZE];          /* Use for the check make sure which packets already been ACKed */
+static bool acked[WINDOWSIZE];         /* Use for the check make sure which packets already been ACKed */
 
 /* called from layer 5 (application layer), passed the message to be sent to other side */
 void A_output(struct msg message)
@@ -135,7 +135,7 @@ void A_timerinterrupt(void)
 {
 
   if (TRACE > 0) 
-    printf("----A: time out, resend packets!\n");
+    printf("----A: time out,resend packets!\n");
 
   /* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
   if (TRACE > 0)
@@ -218,10 +218,7 @@ void B_input(struct pkt packet)
 /* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
 {
-  int i;
-  for (i = 0; i < SEQSPACE; i++) {
-    resqe[i] = false;
-  }
+  expectedseqnum = 0;
 }
 
 /******************************************************************************
