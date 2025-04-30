@@ -145,11 +145,14 @@ void A_input(struct pkt packet)
 /* called when A's timer goes off */
 void A_timerinterrupt(void)
 {
-  if (TRACE > 0) {
+  if (TRACE > 0) 
     printf("----A: time out, resend packets!\n");
-  }
 
-  /* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
+/* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
+  if (TRACE > 0)
+    printf("----A: resending packet %d\n", buffer[windowfirst].seqnum);
+
+  
   tolayer3(A, buffer[windowfirst]);
   packets_resent++;
   
