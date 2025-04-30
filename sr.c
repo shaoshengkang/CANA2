@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -123,7 +124,7 @@ void A_input(struct pkt packet){
       if (TRACE > 0)
         printf("----A: ACK %d is not a duplicate\n", packet.acknum);
       new_ACKs++;
-      acked[packet.acknum] = true;  /*  mark this ACK already got received */
+      acked[packet.acknum] = true; /*  mark this ACK already got received */
 
       /* only slide window if this is the oldest or the lowest unacked packets in window */
       if(packet.acknum == buffer[windowfirst].seqnum){
@@ -132,7 +133,6 @@ void A_input(struct pkt packet){
           windowfirst = (windowfirst + 1) %  WINDOWSIZE;
           windowcount--;
           }
-
         /* restart the time again and if still have more unacked packets in the window */
         stoptimer(A);
         if (windowcount > 0)
@@ -151,6 +151,7 @@ void A_timerinterrupt(void){
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
+  
   /* only resend the slide window the left side packet, it represents the buffer[windowfirst] */
   if (TRACE > 0)
     printf("---A: resending packet %d\n", buffer[windowfirst].seqnum);
@@ -250,3 +251,4 @@ void B_output(struct msg message)
 void B_timerinterrupt(void)
 {
 }
+
