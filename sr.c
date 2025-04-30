@@ -99,8 +99,7 @@ void A_output(struct msg message)
     A_nextseqnum = (A_nextseqnum + 1) % SEQSPACE;  
   }
   /* if blocked,  window is full */
-  else 
-  {
+  else {
     if (TRACE > 0)
       printf("----A: New message arrives, send window is full\n");
     window_full++;
@@ -120,23 +119,19 @@ void A_input(struct pkt packet){
     if (TRACE > 0)
       printf("----A: uncorrupted ACK %d is received\n", packet.acknum);
 
-    if (!acked[packet.acknum]) 
-    {
+    if (!acked[packet.acknum]){
       if (TRACE > 0)
         printf("----A: ACK %d is not a duplicate\n", packet.acknum);
       new_ACKs++;
       acked[packet.acknum] = true; /*  mark this ACK already got received */
 
       /* only slide window if this is the oldest or the lowest unacked packets in window */
-      if (packet.acknum == buffer[windowfirst].seqnum) 
-      {
+      if(packet.acknum == buffer[windowfirst].seqnum){
         /* look for next unacked packet and start its timer */
-        while (windowcount > 0 && acked[buffer[windowfirst].seqnum]) 
-        {
+        while (windowcount > 0 && acked[buffer[windowfirst].seqnum]){
           windowfirst = (windowfirst + 1) % WINDOWSIZE;
           windowcount--;
         }
-
         /* restart the time again and if still have more unacked packets in the window */
         stoptimer(A);
         if (windowcount > 0)
@@ -151,8 +146,7 @@ void A_input(struct pkt packet){
 }
 
 /* called when A's timer goes off */
-void A_timerinterrupt(void)
-{
+void A_timerinterrupt(void){
   if (TRACE > 0) 
     printf("----A: time out,resend packets!\n");
 
@@ -203,7 +197,7 @@ void B_input(struct pkt packet)
     /* deliver to receiving application */
     if (resqe[packet.seqnum] == false){
       resqe[packet.seqnum] = true;
-      for (i=0; i<20; i++ )
+      for ( i=0; i<20; i++ )
         receivedpkt[packet.seqnum].payload[i] = packet.payload[i];
     }
 
@@ -219,14 +213,14 @@ void B_input(struct pkt packet)
     sendpkt.seqnum = NOTINUSE; /* ACK */
 
     /* we don't have any data to send.  fill payload with 0's */
-    for (i = 0; i < 20; i++) 
+    for (i=0; i<20; i++ ) 
       sendpkt.payload[i] = '0';  
 
     /* compute checksum */
     sendpkt.checksum = ComputeChecksum(sendpkt); 
 
     /* send out packet */
-    tolayer3(B, sendpkt);
+    tolayer3 (B, sendpkt);
   }
 }
 
