@@ -4,6 +4,24 @@
 #include "emulator.h"
 #include "sr.h"
 
+/* ******************************************************************
+   Go Back N protocol.  Adapted from J.F.Kurose
+   ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.2  
+
+   Network properties:
+   - one way network delay averages five time units (longer if there
+   are other messages in the channel for GBN), but can be larger
+   - packets can be corrupted (either the header or the data portion)
+   or lost, according to user-defined probabilities
+   - packets will be delivered in the order in which they were sent
+   (although some can be lost).
+
+   Modifications: 
+   - removed bidirectional GBN code and other code not used by prac. 
+   - fixed C style to adhere to current programming style
+   - added GBN implementation
+**********************************************************************/
+
 #define RTT  16.0       /* round trip time.  MUST BE SET TO 16.0 when submitting assignment */
 #define WINDOWSIZE 6    /* the maximum number of buffered unacked packet */
 #define SEQSPACE 12      /* the min sequence space for GBN must be at least windowsize + 2 */
@@ -21,7 +39,7 @@ int ComputeChecksum(struct pkt packet)
 
   checksum = packet.seqnum;
   checksum += packet.acknum;
-  for (i = 0; i < 20; i++) 
+  for (i = 0; i<20; i++ ) 
     checksum += (int)(packet.payload[i]);
 
   return checksum;
@@ -58,7 +76,7 @@ void A_output(struct msg message)
     /* create packet */
     sendpkt.seqnum = A_nextseqnum;
     sendpkt.acknum = NOTINUSE;
-    for (i = 0; i < 20; i++) 
+    for (i = 0; i < 20; i++ ) 
       sendpkt.payload[i] = message.data[i];
     sendpkt.checksum = ComputeChecksum(sendpkt);
 
@@ -71,11 +89,11 @@ void A_output(struct msg message)
     /* send out packet */
     if (TRACE > 0)
       printf("Sending packet %d to layer 3\n", sendpkt.seqnum);
-    tolayer3(A, sendpkt);
+    tolayer3 (A, sendpkt);
 
     /* start timer if first packet in window */
     if (windowcount == 1)
-      starttimer(A, RTT);
+      starttimer(A,RTT);
 
     /* get next sequence number, wrap back to 0 */
     A_nextseqnum = (A_nextseqnum + 1) % SEQSPACE;  
@@ -92,8 +110,10 @@ void A_output(struct msg message)
 /* called from layer 3, when a packet arrives for layer 4 
    In this practical this will always be an ACK as B never sends data.
 */
-void A_input(struct pkt packet)
-{
+void A_input(struct pkt packet){
+  int ackcount = 0;
+  int i;
+
   /* if received ACK is not corrupted */ 
   if (!IsCorrupted(packet)) 
   {
@@ -127,13 +147,12 @@ void A_input(struct pkt packet)
       printf("----A: duplicate ACK received, do nothing!\n");
   }
   else if (TRACE > 0)
-    printf("----A: duplicate ACK received, do nothing!\n");
+    printf("----A: corrupted ACK received, do nothing!\n");
 }
 
 /* called when A's timer goes off */
 void A_timerinterrupt(void)
 {
-
   if (TRACE > 0) 
     printf("----A: time out,resend packets!\n");
 
@@ -141,7 +160,7 @@ void A_timerinterrupt(void)
   if (TRACE > 0)
     printf("---A: resending packet %d\n", buffer[windowfirst].seqnum);
 
-  tolayer3(A, buffer[windowfirst]);
+  tolayer3(A,buffer[windowfirst]);
   packets_resent++;
   
   if (windowcount > 0) /* when sr sends the left side packet, then if windows have unack packet, it will restart the timer */
@@ -165,6 +184,7 @@ void A_init(void)
 /********* Receiver (B)  variables and procedures ************/
 
 static int expectedseqnum; /* the sequence number expected next by the receiver */
+static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
 static struct pkt receivedpkt[SEQSPACE]; /* received packets already got but not submitted, out of order, but must in cache */
 static bool resqe[SEQSPACE];  /* used to mark and sequence each order of packet resqe or not */
 
@@ -186,7 +206,7 @@ void B_input(struct pkt packet)
     if (resqe[packet.seqnum] == false) 
     {
       resqe[packet.seqnum] = true;
-      for (i = 0; i < 20; i++)
+      for (i=0; i<20; i++ )
         receivedpkt[packet.seqnum].payload[i] = packet.payload[i];
     }
 
@@ -219,6 +239,7 @@ void B_input(struct pkt packet)
 void B_init(void)
 {
   expectedseqnum = 0;
+  B_nextseqnum = 1;
 }
 
 /******************************************************************************
