@@ -179,7 +179,7 @@ void B_input(struct pkt packet)
   {
     if (TRACE > 0)
       printf("----B: packet %d is correctly resqe, send ACK!\n", packet.seqnum);
-    packets_received++;
+    packets_resqe++;
 
     /* deliver to receiving application */
 
