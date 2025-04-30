@@ -62,12 +62,13 @@ static int windowcount;                /* the number of packets currently awaiti
 static int A_nextseqnum;               /* the next sequence number to be used by the sender */
 
 /* called from layer 5 (application layer), passed the message to be sent to other side */
+
 void A_output(struct msg message)
 {
   struct pkt sendpkt;
   int i;
 
-  /* if not blocked waiting on ACK */
+ /* if not blocked waiting on ACK */
   if ( windowcount < WINDOWSIZE) {
     if (TRACE > 1)
       printf("----A: New message arrives, send window is not full, send new messge to layer3!\n");
